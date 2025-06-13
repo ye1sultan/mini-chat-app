@@ -28,7 +28,6 @@ export default function ChatDetailScreen({ route }: { route: any }) {
   }, [allMessages, key]);
 
   useEffect(() => {
-    // Mark unread messages as read when they appear
     messages.forEach((msg) => {
       if (!msg.read && msg.from === recipient) {
         markMessageAsRead(recipient, me);

@@ -1,4 +1,3 @@
-// useMessageStore.ts
 import { create } from "zustand";
 
 interface IMessage {

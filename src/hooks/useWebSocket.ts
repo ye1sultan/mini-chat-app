@@ -32,7 +32,7 @@ export const initWebSocket = (username: string) => {
       if (data.type === "read") {
         const markMessagesAsRead =
           useMessageStore.getState().markMessagesAsRead;
-        markMessagesAsRead(data.from, data.to); // `from` is the sender, `to` is the reader
+        markMessagesAsRead(data.from, data.to);
       }
     } catch (err) {
       console.error("🧨 Failed to parse WebSocket message:", err);
