@@ -3,29 +3,31 @@ import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import { Image, StatusBar, View } from "react-native";
 
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { useWebSocket } from "./src/hooks/useWebSocket";
 import ChatDetailScreen from "./src/screens/ChatDetailScreen";
 import ChatListScreen from "./src/screens/ChatListScreen";
+import LoginScreen from "./src/screens/LoginScreen";
 
 export type RootStackParamList = {
+  Login: undefined;
   "Chat List": undefined;
-  Chat: { chatId: string; myUserId: string; name: string; avatar: string };
+  Chat: {
+    me: string;
+    recipient: string;
+    avatar: string;
+  };
 };
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
 const queryClient = new QueryClient();
 
 export default function App() {
-  useWebSocket("1");
-  useWebSocket("2");
-
   return (
     <QueryClientProvider client={queryClient}>
       <NavigationContainer>
         <StatusBar barStyle="light-content" backgroundColor="#171717" />
         <View className="flex-1">
           <Stack.Navigator
-            initialRouteName="Chat List"
+            initialRouteName="Login"
             screenOptions={{
               headerStyle: {
                 backgroundColor: "#171717",
@@ -38,12 +40,13 @@ export default function App() {
               headerTintColor: "#ffffff",
             }}
           >
+            <Stack.Screen name="Login" component={LoginScreen} />
             <Stack.Screen name="Chat List" component={ChatListScreen} />
             <Stack.Screen
               name="Chat"
               component={ChatDetailScreen}
               options={({ route }) => ({
-                title: route.params.name,
+                title: route.params.recipient,
                 headerRight: () => (
                   <Image
                     source={{ uri: route.params.avatar }}

@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import {
   FlatList,
   KeyboardAvoidingView,
@@ -8,48 +8,47 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
+import MemoCheck from "../assets/svg/check";
 import MemoChevronRight from "../assets/svg/chevron-right";
-import { useWebSocket } from "../hooks/useWebSocket";
-import { useChatStore } from "../stores/useChatStore";
+import MemoDoubleCheck from "../assets/svg/double-check";
+import { markMessageAsRead, sendMessage } from "../hooks/useWebSocket";
+import { useMessageStore } from "../stores/useMessageStore";
 
 export default function ChatDetailScreen({ route }: { route: any }) {
-  const { chatId, myUserId } = route.params;
-
-  const rawMessages = useChatStore((s) => s.chats[chatId]);
-  const messages = rawMessages || [];
-
-  const { sendMessage, socket } = useWebSocket(myUserId);
-
+  const { me, recipient } = route.params;
   const [message, setMessage] = useState("");
+
+  const key = useMemo(() => [me, recipient].sort().join("_"), [me, recipient]);
+
+  const allMessages = useMessageStore((state) => state.messagesByUser);
+  const [messages, setMessages] = useState<any[]>([]);
+
+  useEffect(() => {
+    setMessages(allMessages[key] || []);
+  }, [allMessages, key]);
+
+  useEffect(() => {
+    // Mark unread messages as read when they appear
+    messages.forEach((msg) => {
+      if (!msg.read && msg.from === recipient) {
+        markMessageAsRead(recipient, me);
+      }
+    });
+  }, [messages, me, recipient]);
+
   const flatListRef = useRef<FlatList>(null);
 
-  function onSend() {
+  const onSend = () => {
     if (!message.trim()) return;
-
-    const msg = {
-      id: Date.now().toString(),
-      text: message,
-      time: new Date().toLocaleTimeString(),
-    };
-
-    sendMessage(chatId, msg);
+    useMessageStore.getState().addMessage(me, recipient, message);
+    sendMessage(me, recipient, message);
     setMessage("");
-  }
+  };
 
   useEffect(() => {
-    const unreadMessages = messages.filter(
-      (msg) => msg.sender === "them" && !msg.read
-    );
-
-    unreadMessages.forEach((msg) => {
-      socket?.send(JSON.stringify({ type: "read", chatId, messageId: msg.id }));
-    });
-
-    console.log("unreadMessages", unreadMessages);
-  }, [chatId]);
-
-  useEffect(() => {
-    flatListRef.current?.scrollToEnd({ animated: false });
+    if (messages.length > 0) {
+      flatListRef.current?.scrollToEnd({ animated: true });
+    }
   }, [messages]);
 
   return (
@@ -67,32 +66,49 @@ export default function ChatDetailScreen({ route }: { route: any }) {
           <FlatList
             ref={flatListRef}
             data={messages}
-            keyExtractor={(item) => item.id}
+            keyExtractor={(_, index) => index.toString()}
             renderItem={({ item }) => (
               <View
                 className={`p-2 m-2 rounded-lg max-w-md ${
-                  item.sender === "me"
+                  item.from === me
                     ? "self-end bg-blue-500"
                     : "self-start bg-neutral-200"
                 }`}
               >
                 <Text
                   className={
-                    item.sender === "me"
-                      ? "text-neutral-50"
-                      : "text-neutral-950"
+                    item.from === me ? "text-neutral-50" : "text-neutral-950"
                   }
                 >
                   {item.text}
                 </Text>
-                <Text className="text-xs text-gray-400 text-right">
-                  {`${item.time.split(":")[0]}:${item.time.split(":")[1]}`}
-                </Text>
+                <View className="flex-row items-center gap-1">
+                  <Text className="text-xs text-gray-400 text-right">
+                    {new Date().toLocaleTimeString([], {
+                      hour: "2-digit",
+                      minute: "2-digit",
+                    })}
+                  </Text>
+                  {item.from === me &&
+                    (item.read ? (
+                      <MemoDoubleCheck
+                        width={16}
+                        height={16}
+                        className="text-blue-300"
+                      />
+                    ) : (
+                      <MemoCheck
+                        width={16}
+                        height={16}
+                        className="text-blue-300"
+                      />
+                    ))}
+                </View>
               </View>
             )}
           />
         )}
-        <View className="flex-row p-4 border-t border-neutral-700 bg-neutral-900 pb-6">
+        <View className="flex-row items-center p-4 border-t border-neutral-800">
           <TextInput
             className="flex-1 border border-neutral-600 rounded-full px-4 h-10 mr-2 text-neutral-50"
             value={message}
