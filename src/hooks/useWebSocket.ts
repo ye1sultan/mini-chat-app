@@ -2,7 +2,7 @@ import { useMessageStore } from "../stores/useMessageStore";
 
 let ws: WebSocket | null = null;
 
-const WS_URL = "ws://192.168.1.4:3000";
+const WS_URL = "ws://192.168.1.7:3000";
 
 export const initWebSocket = (username: string) => {
   const addMessage = useMessageStore.getState().addMessage;

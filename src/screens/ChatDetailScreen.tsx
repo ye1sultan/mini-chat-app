@@ -107,7 +107,7 @@ export default function ChatDetailScreen({ route }: { route: any }) {
             )}
           />
         )}
-        <View className="flex-row items-center p-4 border-t border-neutral-800">
+        <View className="flex-row items-center p-4 border-t border-neutral-800 pb-6">
           <TextInput
             className="flex-1 border border-neutral-600 rounded-full px-4 h-10 mr-2 text-neutral-50"
             value={message}
@@ -115,6 +115,8 @@ export default function ChatDetailScreen({ route }: { route: any }) {
             placeholder="Type a message..."
             placeholderTextColor="#888"
             keyboardAppearance="dark"
+            autoCapitalize="none"
+            autoCorrect={false}
           />
           <TouchableOpacity
             className="bg-blue-500 h-10 w-10 rounded-full items-center justify-center"
